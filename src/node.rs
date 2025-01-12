@@ -30,22 +30,18 @@ const UDP_BUFFER_SIZE: usize = 1000 * 10; // 10kb max. UDP payload size
 
 #[derive(Clone, Debug)]
 pub struct Config {
-    topic: Topic,
-    udp_server_addr: Ipv4Addr,
-    udp_server_port: u16,
-    udp_client_addr: Ipv4Addr,
-    udp_client_port: u16,
-    bootstrap: Option<PublicKey>,
+    pub topic: Topic,
+    pub udp_server_addr: SocketAddr,
+    pub udp_client_addr: SocketAddr,
+    pub bootstrap: Option<PublicKey>,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
             topic: Topic::from_str(DEFAULT_TOPIC).unwrap(),
-            udp_server_addr: Ipv4Addr::LOCALHOST,
-            udp_server_port: 0,
-            udp_client_addr: Ipv4Addr::LOCALHOST,
-            udp_client_port: 49494,
+            udp_server_addr: (Ipv4Addr::LOCALHOST, 0).into(),
+            udp_client_addr: (Ipv4Addr::LOCALHOST, 49494).into(),
             bootstrap: None,
         }
     }
@@ -55,7 +51,7 @@ impl Default for Config {
 pub struct Node {
     network: Network<Topic>,
     udp_server: Arc<UdpSocket>,
-    client_addr: SocketAddr,
+    config: Config,
 }
 
 impl Node {
@@ -152,18 +148,10 @@ impl Node {
         }
 
         // Launch an UDP server which listens for incoming UDP packets of any data.
-        let udp_server = UdpSocket::bind(format!(
-            "{}:{}",
-            config.udp_server_addr, config.udp_server_port
-        ))
-        .await
-        .context("bind udp server")?;
+        let udp_server = UdpSocket::bind(config.udp_server_addr)
+            .await
+            .context("bind udp server")?;
         let udp_server = Arc::new(udp_server);
-
-        let client_addr: SocketAddr =
-            format!("{}:{}", config.udp_client_addr, config.udp_client_port)
-                .parse()
-                .context("parsing client address and port")?;
 
         {
             let mut operation_store = operation_store.clone();
@@ -200,7 +188,7 @@ impl Node {
                             }
                         }
                         Some(message) = to_udp_rx.recv() => {
-                            if let Err(err) = udp_server.send_to(&message, client_addr).await {
+                            if let Err(err) = udp_server.send_to(&message, config.udp_client_addr).await {
                                 error!("udp error on send to client: {err}");
                             }
                         }
@@ -212,7 +200,7 @@ impl Node {
         Ok(Self {
             network,
             udp_server,
-            client_addr,
+            config,
         })
     }
 
@@ -231,7 +219,7 @@ impl Node {
     }
 
     pub fn udp_client_addr(&self) -> SocketAddr {
-        self.client_addr
+        self.config.udp_client_addr
     }
 
     pub async fn shutdown(self) -> Result<()> {

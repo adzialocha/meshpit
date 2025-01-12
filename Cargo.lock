@@ -2239,6 +2239,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "clap",
+ "hex",
  "p2panda-core",
  "p2panda-discovery",
  "p2panda-net",

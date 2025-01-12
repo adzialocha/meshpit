@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use std::convert::Infallible;
+use std::fmt;
 use std::hash::Hash as StdHash;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -29,8 +29,14 @@ impl Topic {
     }
 }
 
+impl fmt::Display for Topic {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", hex::encode(self.0))
+    }
+}
+
 impl FromStr for Topic {
-    type Err = Infallible;
+    type Err = anyhow::Error;
 
     fn from_str(topic: &str) -> Result<Self, Self::Err> {
         Ok(Self(Hash::new(topic.as_bytes()).into()))

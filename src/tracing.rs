@@ -17,7 +17,7 @@ use tracing_subscriber::EnvFilter;
 ///    This is equivalent to only setting the level "{level}"
 /// 4. When the string specifies a target and a level it will be used as-is: "{filter}", for
 ///    example "tokio=TRACE"
-pub fn setup_tracing(filter: &str) {
+pub fn setup_tracing(filter: String) {
     let default = "meshpit=INFO"
         .parse()
         .expect("hard-coded default directive should be valid");
@@ -27,9 +27,9 @@ pub fn setup_tracing(filter: &str) {
     let filter = if let Some(all_targets_level) = filter.strip_prefix("=") {
         all_targets_level.to_string()
     } else {
-        match Level::from_str(filter) {
+        match Level::from_str(&filter) {
             Ok(level) => format!("meshpit={level}"),
-            Err(_) => filter.to_string(),
+            Err(_) => filter,
         }
     };
     let filter = builder.parse_lossy(filter);
