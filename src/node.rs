@@ -1,8 +1,9 @@
 use std::net::{Ipv4Addr, SocketAddr};
 use std::str::FromStr;
+use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
-use p2panda_core::{Extension, Hash, PrivateKey};
+use p2panda_core::{Extension, Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
@@ -34,6 +35,7 @@ pub struct Config {
     udp_server_port: u16,
     udp_client_addr: Ipv4Addr,
     udp_client_port: u16,
+    bootstrap: Option<PublicKey>,
 }
 
 impl Default for Config {
@@ -44,6 +46,7 @@ impl Default for Config {
             udp_server_port: 0,
             udp_client_addr: Ipv4Addr::LOCALHOST,
             udp_client_port: 49494,
+            bootstrap: None,
         }
     }
 }
@@ -51,6 +54,8 @@ impl Default for Config {
 #[derive(Clone, Debug)]
 pub struct Node {
     network: Network<Topic>,
+    udp_server: Arc<UdpSocket>,
+    client_addr: SocketAddr,
 }
 
 impl Node {
@@ -70,22 +75,16 @@ impl Node {
 
         let relay_url = RELAY_ENDPOINT.parse()?;
 
-        let network = NetworkBuilder::new(network_id.into())
+        let mut network_builder = NetworkBuilder::new(network_id.into())
             .discovery(mdns)
             .sync(sync_config)
-            .relay(relay_url, false, 0)
-            .build()
-            .await
-            .context("spawn p2p network")?;
+            .relay(relay_url, false, 0);
 
-        let node_addrs = network
-            .direct_addresses()
-            .await
-            .ok_or(anyhow!("could not determine local node addresses"))?;
-        info!("p2p node:");
-        for addr in node_addrs {
-            info!("- {}", addr);
+        if let Some(bootstrap) = config.bootstrap {
+            network_builder = network_builder.direct_address(bootstrap, vec![], None);
         }
+
+        let network = network_builder.build().await.context("spawn p2p network")?;
 
         let topic = config.topic.clone();
         let (network_tx, network_rx, gossip_ready) = network.subscribe(topic).await?;
@@ -124,8 +123,9 @@ impl Node {
             });
 
         task::spawn(async move {
-            let _ = gossip_ready.await;
-            info!("joined gossip overlay");
+            if gossip_ready.await.is_ok() {
+                info!("joined gossip overlay");
+            }
         });
 
         {
@@ -158,19 +158,16 @@ impl Node {
         ))
         .await
         .context("bind udp server")?;
-
-        let server_addr = udp_server.local_addr()?;
+        let udp_server = Arc::new(udp_server);
 
         let client_addr: SocketAddr =
             format!("{}:{}", config.udp_client_addr, config.udp_client_port)
                 .parse()
                 .context("parsing client address and port")?;
 
-        info!("udp server: {}", server_addr);
-        info!("udp client: {}", client_addr);
-
         {
             let mut operation_store = operation_store.clone();
+            let udp_server = udp_server.clone();
             let log_id = config.topic.id();
 
             task::spawn(async move {
@@ -212,7 +209,29 @@ impl Node {
             });
         }
 
-        Ok(Self { network })
+        Ok(Self {
+            network,
+            udp_server,
+            client_addr,
+        })
+    }
+
+    pub async fn addrs(&self) -> Result<Vec<SocketAddr>> {
+        let node_addrs = self
+            .network
+            .direct_addresses()
+            .await
+            .ok_or(anyhow!("could not determine local node addresses"))?;
+        Ok(node_addrs)
+    }
+
+    pub async fn udp_server_addr(&self) -> Result<SocketAddr> {
+        let server_addr = self.udp_server.local_addr()?;
+        Ok(server_addr)
+    }
+
+    pub fn udp_client_addr(&self) -> SocketAddr {
+        self.client_addr
     }
 
     pub async fn shutdown(self) -> Result<()> {

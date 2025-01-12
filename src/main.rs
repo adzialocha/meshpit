@@ -3,6 +3,7 @@ use clap::Parser;
 use meshpit::{setup_tracing, Config, Node};
 use p2panda_core::PrivateKey;
 use serde::Serialize;
+use tracing::info;
 
 #[derive(Debug, Serialize, Parser)]
 #[command(
@@ -31,8 +32,16 @@ async fn main() -> Result<()> {
 
     let config = Config::default();
     let private_key = PrivateKey::new();
+    info!("public key: {}", private_key.public_key());
 
     let node = Node::new(private_key, config).await?;
+
+    info!("p2p node:");
+    for addr in node.addrs().await? {
+        info!("- {}", addr);
+    }
+    info!("udp server: {}", node.udp_server_addr().await?);
+    info!("udp client: {}", node.udp_client_addr());
 
     tokio::signal::ctrl_c().await?;
 
