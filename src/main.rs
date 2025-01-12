@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use meshpit::setup_tracing;
+use meshpit::{setup_tracing, Config, Node};
 use serde::Serialize;
 
 #[derive(Debug, Serialize, Parser)]
@@ -22,9 +22,19 @@ struct Args {
     log_level: Option<String>,
 }
 
-#[tokio::main]
+#[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<()> {
     let args = Args::parse();
+
     setup_tracing(&args.log_level.unwrap_or_default());
+
+    let config = Config::default();
+    let mut node = Node::new(config);
+    if let Err(err) = node.spawn().await {
+        return Err(err);
+    }
+
+    tokio::signal::ctrl_c().await?;
+
     Ok(())
 }
