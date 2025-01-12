@@ -47,7 +47,7 @@ impl TryFrom<Args> for Config {
         }
 
         if let Some(topic) = &args.topic {
-            config.topic = Topic::from_str(&topic)?;
+            config.topic = Topic::from_str(topic)?;
         }
 
         if let Some(addr) = &args.udp_server {

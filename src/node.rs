@@ -7,13 +7,14 @@ use p2panda_core::{Extension, Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
+use p2panda_stream::operation::ingest_operation;
 use p2panda_stream::{DecodeExt, IngestExt};
 use p2panda_sync::log_sync::LogSyncProtocol;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 use tokio::task;
 use tokio_stream::{wrappers::ReceiverStream, StreamExt};
-use tracing::{error, info, warn};
+use tracing::{debug, error, warn};
 
 use crate::operation::{
     create_operation, decode_gossip_message, encode_gossip_message, Extensions,
@@ -120,7 +121,7 @@ impl Node {
 
         task::spawn(async move {
             if gossip_ready.await.is_ok() {
-                info!("joined gossip overlay");
+                debug!("joined gossip overlay");
             }
         });
 
@@ -134,6 +135,14 @@ impl Node {
                     author_store
                         .add_author(topic, operation.header.public_key)
                         .await;
+
+                    let body_len = operation.body.as_ref().map_or(0, |body| body.size());
+                    debug!(
+                        seq_num = operation.header.seq_num,
+                        len = body_len,
+                        hash = format!("{:.8}", operation.hash),
+                        "received operation"
+                    );
 
                     match operation.body {
                         Some(body) => {
@@ -166,15 +175,36 @@ impl Node {
                         message = udp_server.recv(&mut buf) => {
                             match message {
                                 Ok(len) => {
+                                    let prune = false;
+
                                     let (header, body) = create_operation(
                                         &mut operation_store,
                                         log_id,
                                         &private_key,
                                         Some(&buf[..len]),
-                                        false,
+                                        prune,
                                     )
                                     .await;
-                                    let bytes = encode_gossip_message(&header, body.as_ref()).unwrap();
+
+                                    let Ok(bytes) = encode_gossip_message(&header, body.as_ref()) else {
+                                        error!("could not encode gossip message");
+                                        break;
+                                    };
+
+                                    debug!(seq_num = header.seq_num, len = len, "publish operation");
+
+                                    if ingest_operation(
+                                        &mut operation_store,
+                                        header,
+                                        body,
+                                        bytes.clone(),
+                                        &log_id,
+                                        prune,
+                                    )
+                                    .await.is_err() {
+                                        error!("could not ingest p2panda operation");
+                                        break;
+                                    }
 
                                     if network_tx.send(ToNetwork::Message {
                                         bytes,
