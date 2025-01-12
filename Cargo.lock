@@ -193,6 +193,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "atomic-waker"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1505bd5d3d116872e7271a6d4e16d81d0c8570876c8de68093a09ac269d8aac0"
+
+[[package]]
 name = "attohttpc"
 version = "0.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -410,6 +416,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8eb5e908ef3a6efbe1ed62520fb7287959888c88485abe072543190ecc66783"
 dependencies = [
  "clap_builder",
+ "clap_derive",
 ]
 
 [[package]]
@@ -422,6 +429,18 @@ dependencies = [
  "anstyle",
  "clap_lex",
  "strsim",
+]
+
+[[package]]
+name = "clap_derive"
+version = "4.5.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "54b755194d6389280185988721fffba69495eed5ee9feeee9a599b53db80318c"
+dependencies = [
+ "heck",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.96",
 ]
 
 [[package]]
@@ -684,18 +703,18 @@ dependencies = [
 
 [[package]]
 name = "derive_more"
-version = "1.0.0-beta.7"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3249c0372e72f5f93b5c0ca54c0ab76bbf6216b6f718925476fd9bc4ffabb4fe"
+checksum = "4a9b99b9cbbe49445b21764dc0625032a89b145a2642e67603e1c936f5458d05"
 dependencies = [
  "derive_more-impl",
 ]
 
 [[package]]
 name = "derive_more-impl"
-version = "1.0.0-beta.7"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "27d919ced7590fc17b5d5a3c63b662e8a7d2324212c4e4dbbed975cafd22d16d"
+checksum = "cb7330aeadfbe296029522e6c40f315320aba36fc43a5b3632f3795348f3bd22"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1820,9 +1839,9 @@ checksum = "ddc24109865250148c2e0f3d25d4f0f479571723792d3802153c60922a4fb708"
 
 [[package]]
 name = "iroh-base"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "545424889bce87e44fd08dac9e6889635630fdbdaaa858a3c5a5f0adbb8d3779"
+checksum = "973c0b3c7851fa2e8e6cf4cb81c9f4cab1373848828fafa43dfe25b123a89ff2"
 dependencies = [
  "aead",
  "anyhow",
@@ -1861,9 +1880,9 @@ dependencies = [
 
 [[package]]
 name = "iroh-gossip"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6a5489a563e407fb2be654e950536da4230e46642111f12b16d7013228164aae"
+checksum = "b44749f361aca7cddcb357b62ef84cad1023771aee03d427c8922991fc4a9561"
 dependencies = [
  "anyhow",
  "async-channel",
@@ -1889,9 +1908,9 @@ dependencies = [
 
 [[package]]
 name = "iroh-metrics"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9fb6ab80f7cccde80be07a643308e1ff925d5be91721ec65ba96b261a0bcb5e5"
+checksum = "02edfa7ca1aa89b0b9793d94671e32b79c97d61e9022f082c5eb2b95b64e90c0"
 dependencies = [
  "anyhow",
  "erased_set",
@@ -1910,9 +1929,9 @@ dependencies = [
 
 [[package]]
 name = "iroh-net"
-version = "0.25.0"
+version = "0.26.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4a099a60478cb9319153756a9cf2ff41aa03d18403690a91e60f049ad467b057"
+checksum = "329553be056a92eec7802e1c087eed951eec6e60f0f0740491ef16a295be4ca2"
 dependencies = [
  "anyhow",
  "backoff",
@@ -1943,9 +1962,9 @@ dependencies = [
  "iroh-quinn-proto",
  "iroh-quinn-udp",
  "libc",
- "netdev",
+ "netdev 0.30.0",
  "netlink-packet-core",
- "netlink-packet-route",
+ "netlink-packet-route 0.17.1",
  "netlink-sys",
  "num_enum",
  "once_cell",
@@ -1957,7 +1976,7 @@ dependencies = [
  "rcgen",
  "reqwest",
  "ring",
- "rtnetlink",
+ "rtnetlink 0.13.1",
  "rustls",
  "rustls-webpki",
  "serde",
@@ -1970,6 +1989,7 @@ dependencies = [
  "time",
  "tokio",
  "tokio-rustls",
+ "tokio-stream",
  "tokio-tungstenite",
  "tokio-tungstenite-wasm",
  "tokio-util",
@@ -1979,7 +1999,7 @@ dependencies = [
  "watchable",
  "webpki-roots",
  "windows 0.51.1",
- "wmi",
+ "wmi 0.13.4",
  "x509-parser",
  "z32",
 ]
@@ -2226,6 +2246,8 @@ dependencies = [
  "p2panda-sync",
  "serde",
  "tokio",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
@@ -2279,7 +2301,24 @@ dependencies = [
  "libc",
  "memalloc",
  "netlink-packet-core",
- "netlink-packet-route",
+ "netlink-packet-route 0.17.1",
+ "netlink-sys",
+ "once_cell",
+ "system-configuration",
+ "windows-sys 0.52.0",
+]
+
+[[package]]
+name = "netdev"
+version = "0.31.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f901362e84cd407be6f8cd9d3a46bccf09136b095792785401ea7d283c79b91d"
+dependencies = [
+ "dlopen2",
+ "ipnet",
+ "libc",
+ "netlink-packet-core",
+ "netlink-packet-route 0.17.1",
  "netlink-sys",
  "once_cell",
  "system-configuration",
@@ -2307,6 +2346,20 @@ dependencies = [
  "bitflags 1.3.2",
  "byteorder",
  "libc",
+ "netlink-packet-core",
+ "netlink-packet-utils",
+]
+
+[[package]]
+name = "netlink-packet-route"
+version = "0.19.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74c171cd77b4ee8c7708da746ce392440cb7bcf618d122ec9ecc607b12938bf4"
+dependencies = [
+ "anyhow",
+ "byteorder",
+ "libc",
+ "log",
  "netlink-packet-core",
  "netlink-packet-utils",
 ]
@@ -2352,12 +2405,56 @@ dependencies = [
 ]
 
 [[package]]
+name = "netwatch"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "304c0c1b348830b016039f2cb1c5ac8217084a78875262c5594925dd08aa77fc"
+dependencies = [
+ "anyhow",
+ "atomic-waker",
+ "bytes",
+ "derive_more",
+ "futures-lite 2.6.0",
+ "futures-sink",
+ "futures-util",
+ "iroh-quinn-udp",
+ "libc",
+ "netdev 0.31.0",
+ "netlink-packet-core",
+ "netlink-packet-route 0.19.0",
+ "netlink-sys",
+ "once_cell",
+ "rtnetlink 0.13.1",
+ "rtnetlink 0.14.1",
+ "serde",
+ "socket2",
+ "thiserror 2.0.11",
+ "time",
+ "tokio",
+ "tokio-util",
+ "tracing",
+ "windows 0.58.0",
+ "wmi 0.14.3",
+]
+
+[[package]]
 name = "nix"
 version = "0.26.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "598beaf3cc6fdd9a5dfb1630c2800c7acd31df7aaf0f565796fba2b53ca1af1b"
 dependencies = [
  "bitflags 1.3.2",
+ "cfg-if",
+ "libc",
+]
+
+[[package]]
+name = "nix"
+version = "0.27.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2eb04e9c688eff1c89d72b407f168cf79bb9e867a9d3323ed6c01519eb9cc053"
+dependencies = [
+ "bitflags 2.7.0",
  "cfg-if",
  "libc",
 ]
@@ -2551,8 +2648,7 @@ dependencies = [
 [[package]]
 name = "p2panda-core"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "809197be4bf25f649a55bd7fc7869c87b0c6666809cc5b57d113ca46e247db50"
+source = "git+https://github.com/p2panda/p2panda?rev=b296805a4f3daab3d4e17c28ae8e3d927ed8b007#b296805a4f3daab3d4e17c28ae8e3d927ed8b007"
 dependencies = [
  "blake3",
  "ciborium",
@@ -2567,8 +2663,7 @@ dependencies = [
 [[package]]
 name = "p2panda-discovery"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be07d6a579c5efea99ead1467f3418e9157bb1b7ae17bde3163eae52f87e11b7"
+source = "git+https://github.com/p2panda/p2panda?rev=b296805a4f3daab3d4e17c28ae8e3d927ed8b007#b296805a4f3daab3d4e17c28ae8e3d927ed8b007"
 dependencies = [
  "anyhow",
  "flume",
@@ -2586,8 +2681,7 @@ dependencies = [
 [[package]]
 name = "p2panda-net"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9990043aa9e8204cd86759274e0de5c41ba9562ac52fbb96d52099a026111b02"
+source = "git+https://github.com/p2panda/p2panda?rev=b296805a4f3daab3d4e17c28ae8e3d927ed8b007#b296805a4f3daab3d4e17c28ae8e3d927ed8b007"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2598,6 +2692,7 @@ dependencies = [
  "iroh-gossip",
  "iroh-net",
  "iroh-quinn",
+ "netwatch",
  "p2panda-core",
  "p2panda-discovery",
  "p2panda-sync",
@@ -2613,8 +2708,7 @@ dependencies = [
 [[package]]
 name = "p2panda-store"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e7459eb3358d00a51fc461574af5894cc7d6b7ceb420ddae9c2b56c15cefc96"
+source = "git+https://github.com/p2panda/p2panda?rev=b296805a4f3daab3d4e17c28ae8e3d927ed8b007#b296805a4f3daab3d4e17c28ae8e3d927ed8b007"
 dependencies = [
  "p2panda-core",
  "trait-variant",
@@ -2623,8 +2717,7 @@ dependencies = [
 [[package]]
 name = "p2panda-stream"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b43ec2718a6a4d75982f91aa110eaba7ccec70490c14959cd7ea0402d33845b5"
+source = "git+https://github.com/p2panda/p2panda?rev=b296805a4f3daab3d4e17c28ae8e3d927ed8b007#b296805a4f3daab3d4e17c28ae8e3d927ed8b007"
 dependencies = [
  "ciborium",
  "futures-channel",
@@ -2639,8 +2732,7 @@ dependencies = [
 [[package]]
 name = "p2panda-sync"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1cd7c785c2981e4dae2432747a2479f300219e701f2a37456f9a7950f5597b2"
+source = "git+https://github.com/p2panda/p2panda?rev=b296805a4f3daab3d4e17c28ae8e3d927ed8b007#b296805a4f3daab3d4e17c28ae8e3d927ed8b007"
 dependencies = [
  "async-trait",
  "futures",
@@ -3386,11 +3478,29 @@ dependencies = [
  "futures",
  "log",
  "netlink-packet-core",
- "netlink-packet-route",
+ "netlink-packet-route 0.17.1",
  "netlink-packet-utils",
  "netlink-proto",
  "netlink-sys",
- "nix",
+ "nix 0.26.4",
+ "thiserror 1.0.69",
+ "tokio",
+]
+
+[[package]]
+name = "rtnetlink"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b684475344d8df1859ddb2d395dd3dac4f8f3422a1aa0725993cb375fc5caba5"
+dependencies = [
+ "futures",
+ "log",
+ "netlink-packet-core",
+ "netlink-packet-route 0.19.0",
+ "netlink-packet-utils",
+ "netlink-proto",
+ "netlink-sys",
+ "nix 0.27.1",
  "thiserror 1.0.69",
  "tokio",
 ]
@@ -4997,6 +5107,21 @@ dependencies = [
  "log",
  "serde",
  "thiserror 1.0.69",
+ "windows 0.58.0",
+ "windows-core 0.58.0",
+]
+
+[[package]]
+name = "wmi"
+version = "0.14.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c960b3124cc00cefb350159cb43aba8984ed69c93d443df09f3299693171b37"
+dependencies = [
+ "chrono",
+ "futures",
+ "log",
+ "serde",
+ "thiserror 2.0.11",
  "windows 0.58.0",
  "windows-core 0.58.0",
 ]
