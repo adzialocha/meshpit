@@ -1,0 +1,5 @@
+# meshpit
+
+## License
+
+[`MIT`](LICENSE)
