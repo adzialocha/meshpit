@@ -2247,6 +2247,7 @@ dependencies = [
  "p2panda-sync",
  "serde",
  "tokio",
+ "tokio-stream",
  "tracing",
  "tracing-subscriber",
 ]

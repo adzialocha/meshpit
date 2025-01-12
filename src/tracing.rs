@@ -27,7 +27,7 @@ pub fn setup_tracing(filter: &str) {
     let filter = if let Some(all_targets_level) = filter.strip_prefix("=") {
         all_targets_level.to_string()
     } else {
-        match Level::from_str(&filter) {
+        match Level::from_str(filter) {
             Ok(level) => format!("meshpit={level}"),
             Err(_) => filter.to_string(),
         }

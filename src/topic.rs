@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
+use std::convert::Infallible;
 use std::hash::Hash as StdHash;
+use std::str::FromStr;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -10,11 +12,9 @@ use p2panda_sync::TopicQuery;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
-/// Every meshpit node writes to one single log which is identified by the node's public key and
-/// this default log id.
-const DEFAULT_LOG_ID: LogId = 1;
-
-pub type LogId = u64;
+/// Every meshpit peer writes to one single log per topic which is identified by the node's public
+/// key and the topic id.
+pub type LogId = [u8; 32];
 
 /// Nodes converge around topics they are interested in to exchange data.
 ///
@@ -24,8 +24,16 @@ pub type LogId = u64;
 pub struct Topic([u8; 32]);
 
 impl Topic {
-    pub fn new(topic: &str) -> Self {
-        Self(Hash::new(topic.as_bytes()).into())
+    pub fn new(topic_id: [u8; 32]) -> Self {
+        Self(topic_id)
+    }
+}
+
+impl FromStr for Topic {
+    type Err = Infallible;
+
+    fn from_str(topic: &str) -> Result<Self, Self::Err> {
+        Ok(Self(Hash::new(topic.as_bytes()).into()))
     }
 }
 
@@ -37,8 +45,7 @@ impl TopicId for Topic {
     }
 }
 
-/// Remember which topic was used by which "author", identified by it's public key.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct AuthorStore(Arc<RwLock<HashMap<Topic, HashSet<PublicKey>>>>);
 
 impl AuthorStore {
@@ -76,7 +83,8 @@ impl TopicLogMap<Topic, LogId> for AuthorStore {
         authors.map(|authors| {
             let mut map = HashMap::with_capacity(authors.len());
             for author in authors {
-                map.insert(author, vec![DEFAULT_LOG_ID]);
+                // We write all data of one author into one log for now.
+                map.insert(author, vec![topic.id()]);
             }
             map
         })

@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use meshpit::{setup_tracing, Config, Node};
+use p2panda_core::PrivateKey;
 use serde::Serialize;
 
 #[derive(Debug, Serialize, Parser)]
@@ -29,12 +30,13 @@ async fn main() -> Result<()> {
     setup_tracing(&args.log_level.unwrap_or_default());
 
     let config = Config::default();
-    let mut node = Node::new(config);
-    if let Err(err) = node.spawn().await {
-        return Err(err);
-    }
+    let private_key = PrivateKey::new();
+
+    let node = Node::new(private_key, config).await?;
 
     tokio::signal::ctrl_c().await?;
+
+    node.shutdown().await?;
 
     Ok(())
 }

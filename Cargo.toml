@@ -15,5 +15,6 @@ p2panda-stream = { git = "https://github.com/p2panda/p2panda", rev = "b296805a4f
 p2panda-sync = { git = "https://github.com/p2panda/p2panda", rev = "b296805a4f3daab3d4e17c28ae8e3d927ed8b007", features = ["log-sync"] }
 serde = "1.0.217"
 tokio = "1.43.0"
+tokio-stream = "0.1.17"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }

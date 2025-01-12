@@ -1,4 +1,5 @@
 mod node;
+mod operation;
 mod topic;
 mod tracing;
 

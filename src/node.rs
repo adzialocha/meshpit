@@ -1,24 +1,35 @@
 use std::net::{Ipv4Addr, SocketAddr};
+use std::str::FromStr;
 
-use anyhow::{Context, Result};
-use p2panda_core::{Hash, PrivateKey};
+use anyhow::{anyhow, Context, Result};
+use p2panda_core::{Extension, Hash, PrivateKey};
 use p2panda_discovery::mdns::LocalDiscovery;
-use p2panda_net::{NetworkBuilder, SyncConfiguration};
+use p2panda_net::{FromNetwork, Network, NetworkBuilder, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
+use p2panda_stream::{DecodeExt, IngestExt};
 use p2panda_sync::log_sync::LogSyncProtocol;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 use tokio::task;
-use tracing::{error, info};
+use tokio_stream::{wrappers::ReceiverStream, StreamExt};
+use tracing::{error, info, warn};
 
-use crate::topic::{AuthorStore, LogId};
+use crate::operation::{
+    create_operation, decode_gossip_message, encode_gossip_message, Extensions,
+};
+use crate::topic::{AuthorStore, LogId, Topic};
 
 const RELAY_ENDPOINT: &str = "https://staging-euw1-1.relay.iroh.network";
 
 const NETWORK_ID: &str = "meshpit";
 
+const DEFAULT_TOPIC: &str = "peers-for-peers";
+
+const UDP_BUFFER_SIZE: usize = 1000 * 10; // 10kb max. UDP payload size
+
 #[derive(Clone, Debug)]
 pub struct Config {
+    topic: Topic,
     udp_server_addr: Ipv4Addr,
     udp_server_port: u16,
     udp_client_addr: Ipv4Addr,
@@ -28,6 +39,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
+            topic: Topic::from_str(DEFAULT_TOPIC).unwrap(),
             udp_server_addr: Ipv4Addr::LOCALHOST,
             udp_server_port: 0,
             udp_client_addr: Ipv4Addr::LOCALHOST,
@@ -38,75 +50,22 @@ impl Default for Config {
 
 #[derive(Clone, Debug)]
 pub struct Node {
-    config: Config,
-    private_key: PrivateKey,
+    network: Network<Topic>,
 }
 
 impl Node {
-    pub fn new(private_key: PrivateKey, config: Config) -> Self {
-        Self {
-            config,
-            private_key,
-        }
-    }
-
-    pub async fn spawn(&mut self) -> Result<()> {
-        let udp_server = UdpSocket::bind(format!(
-            "{}:{}",
-            self.config.udp_server_addr, self.config.udp_server_port
-        ))
-        .await
-        .context("bind udp server")?;
-
-        let server_addr = udp_server.local_addr()?;
-
-        let client_addr: SocketAddr = format!(
-            "{}:{}",
-            self.config.udp_client_addr, self.config.udp_client_port
-        )
-        .parse()
-        .context("parsing client address and port")?;
-
-        info!("udp server: {}", server_addr);
-        info!("udp client: {}", client_addr);
-
-        let (from_udp_tx, from_udp_rx) = mpsc::channel::<Vec<u8>>(128);
+    pub async fn new(private_key: PrivateKey, config: Config) -> Result<Self> {
         let (to_udp_tx, mut to_udp_rx) = mpsc::channel::<Vec<u8>>(128);
 
-        task::spawn(async move {
-            let mut buf = [0; 1000 * 10]; // 10kb max. UDP payload size
-
-            loop {
-                tokio::select! {
-                    message = udp_server.recv(&mut buf) => {
-                        match message {
-                            Ok(len) => {
-                                if let Err(_) = from_udp_tx.send(Vec::from(&buf[..len])).await {
-                                    break;
-                                }
-                            }
-                            Err(err) => {
-                                error!("udp server error on recv: {err}");
-                            }
-                        }
-                    }
-                    Some(message) = to_udp_rx.recv() => {
-                        if let Err(err) = udp_server.send_to(&message, client_addr).await {
-                            error!("udp error on send to client: {err}");
-                        }
-                    }
-                }
-            }
-        });
-
+        // Launch an p2p network.
         let network_id = Hash::new(NETWORK_ID.as_bytes());
 
         let mdns = LocalDiscovery::new().context("bind socket for mDNS discovery")?;
 
-        let operation_store = MemoryStore::<LogId, ()>::new();
+        let operation_store = MemoryStore::<LogId, Extensions>::new();
         let author_store = AuthorStore::new();
 
-        let sync_protocol = LogSyncProtocol::new(author_store, operation_store);
+        let sync_protocol = LogSyncProtocol::new(author_store.clone(), operation_store.clone());
         let sync_config = SyncConfiguration::new(sync_protocol);
 
         let relay_url = RELAY_ENDPOINT.parse()?;
@@ -115,10 +74,149 @@ impl Node {
             .discovery(mdns)
             .sync(sync_config)
             .relay(relay_url, false, 0)
-            .build();
+            .build()
+            .await
+            .context("spawn p2p network")?;
 
-        task::spawn(async move {});
+        let node_addrs = network
+            .direct_addresses()
+            .await
+            .ok_or(anyhow!("could not determine local node addresses"))?;
+        info!("p2p node:");
+        for addr in node_addrs {
+            info!("- {}", addr);
+        }
 
+        let topic = config.topic.clone();
+        let (network_tx, network_rx, gossip_ready) = network.subscribe(topic).await?;
+        let stream = ReceiverStream::new(network_rx);
+
+        let stream = stream.filter_map(|event| match event {
+            FromNetwork::GossipMessage { bytes, .. } => match decode_gossip_message(&bytes) {
+                Ok(result) => Some(result),
+                Err(err) => {
+                    warn!("could not decode gossip message: {err}");
+                    None
+                }
+            },
+            FromNetwork::SyncMessage {
+                header, payload, ..
+            } => Some((header, payload)),
+        });
+
+        // Decode and ingest the p2panda operations.
+        let mut stream = stream
+            .decode()
+            .filter_map(|result| match result {
+                Ok(operation) => Some(operation),
+                Err(err) => {
+                    warn!("decode operation error: {err}");
+                    None
+                }
+            })
+            .ingest(operation_store.clone(), 128)
+            .filter_map(|result| match result {
+                Ok(operation) => Some(operation),
+                Err(err) => {
+                    warn!("ingest operation error: {err}");
+                    None
+                }
+            });
+
+        task::spawn(async move {
+            let _ = gossip_ready.await;
+            info!("joined gossip overlay");
+        });
+
+        {
+            let mut author_store = author_store.clone();
+
+            task::spawn(async move {
+                while let Some(operation) = stream.next().await {
+                    let log_id: Option<LogId> = operation.header.extract();
+                    let topic = Topic::new(log_id.expect("log id exists in header extensions"));
+                    author_store
+                        .add_author(topic, operation.header.public_key)
+                        .await;
+
+                    match operation.body {
+                        Some(body) => {
+                            if to_udp_tx.send(body.to_bytes()).await.is_err() {
+                                break;
+                            }
+                        }
+                        None => continue,
+                    }
+                }
+            });
+        }
+
+        // Launch an UDP server which listens for incoming UDP packets of any data.
+        let udp_server = UdpSocket::bind(format!(
+            "{}:{}",
+            config.udp_server_addr, config.udp_server_port
+        ))
+        .await
+        .context("bind udp server")?;
+
+        let server_addr = udp_server.local_addr()?;
+
+        let client_addr: SocketAddr =
+            format!("{}:{}", config.udp_client_addr, config.udp_client_port)
+                .parse()
+                .context("parsing client address and port")?;
+
+        info!("udp server: {}", server_addr);
+        info!("udp client: {}", client_addr);
+
+        {
+            let mut operation_store = operation_store.clone();
+            let log_id = config.topic.id();
+
+            task::spawn(async move {
+                let mut buf = [0; UDP_BUFFER_SIZE];
+
+                loop {
+                    tokio::select! {
+                        message = udp_server.recv(&mut buf) => {
+                            match message {
+                                Ok(len) => {
+                                    let (header, body) = create_operation(
+                                        &mut operation_store,
+                                        log_id,
+                                        &private_key,
+                                        Some(&buf[..len]),
+                                        false,
+                                    )
+                                    .await;
+                                    let bytes = encode_gossip_message(&header, body.as_ref()).unwrap();
+
+                                    if network_tx.send(ToNetwork::Message {
+                                        bytes,
+                                    }).await.is_err() {
+                                        break;
+                                    }
+                                }
+                                Err(err) => {
+                                    error!("udp server error on recv: {err}");
+                                }
+                            }
+                        }
+                        Some(message) = to_udp_rx.recv() => {
+                            if let Err(err) = udp_server.send_to(&message, client_addr).await {
+                                error!("udp error on send to client: {err}");
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        Ok(Self { network })
+    }
+
+    pub async fn shutdown(self) -> Result<()> {
+        self.network.shutdown().await?;
         Ok(())
     }
 }
