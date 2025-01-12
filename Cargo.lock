@@ -2237,6 +2237,7 @@ name = "meshpit"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "clap",
  "p2panda-core",
  "p2panda-discovery",

@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.95"
+async-trait = "0.1.85"
 clap = { version = "4.5.24", features = ["derive"] }
 p2panda-core = { git = "https://github.com/p2panda/p2panda", rev = "b296805a4f3daab3d4e17c28ae8e3d927ed8b007" }
 p2panda-discovery = { git = "https://github.com/p2panda/p2panda", rev = "b296805a4f3daab3d4e17c28ae8e3d927ed8b007", features = ["mdns"] }
