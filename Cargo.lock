@@ -2240,6 +2240,7 @@ dependencies = [
  "async-trait",
  "clap",
  "hex",
+ "iroh-gossip",
  "p2panda-core",
  "p2panda-discovery",
  "p2panda-net",

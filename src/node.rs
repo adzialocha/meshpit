@@ -3,11 +3,12 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
+use iroh_gossip::proto::Config as GossipConfig;
 use p2panda_core::{Extension, Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
-use p2panda_stream::operation::ingest_operation;
+use p2panda_stream::operation::{ingest_operation, IngestResult};
 use p2panda_stream::{DecodeExt, IngestExt};
 use p2panda_sync::log_sync::LogSyncProtocol;
 use tokio::net::UdpSocket;
@@ -27,7 +28,7 @@ const NETWORK_ID: &str = "meshpit";
 
 const DEFAULT_TOPIC: &str = "peers-for-peers";
 
-const UDP_BUFFER_SIZE: usize = 1000 * 10; // 10kb max. UDP payload size
+const MAX_MESSAGE_SIZE: usize = 1000 * 10; // 10kb max. UDP payload size
 
 #[derive(Clone, Debug)]
 pub struct Config {
@@ -75,6 +76,10 @@ impl Node {
         let mut network_builder = NetworkBuilder::new(network_id.into())
             .discovery(mdns)
             .sync(sync_config)
+            .gossip(GossipConfig {
+                max_message_size: MAX_MESSAGE_SIZE,
+                ..Default::default()
+            })
             .relay(relay_url, false, 0);
 
         if let Some(bootstrap) = config.bootstrap {
@@ -85,8 +90,14 @@ impl Node {
 
         let topic = config.topic.clone();
         let (network_tx, network_rx, gossip_ready) = network.subscribe(topic).await?;
-        let stream = ReceiverStream::new(network_rx);
 
+        task::spawn(async move {
+            if gossip_ready.await.is_ok() {
+                debug!("joined gossip overlay");
+            }
+        });
+
+        let stream = ReceiverStream::new(network_rx);
         let stream = stream.filter_map(|event| match event {
             FromNetwork::GossipMessage { bytes, .. } => match decode_gossip_message(&bytes) {
                 Ok(result) => Some(result),
@@ -119,12 +130,6 @@ impl Node {
                 }
             });
 
-        task::spawn(async move {
-            if gossip_ready.await.is_ok() {
-                debug!("joined gossip overlay");
-            }
-        });
-
         {
             let mut author_store = author_store.clone();
 
@@ -140,7 +145,7 @@ impl Node {
                     debug!(
                         seq_num = operation.header.seq_num,
                         len = body_len,
-                        hash = format!("{:.8}", operation.hash),
+                        hash = %operation.hash,
                         "received operation"
                     );
 
@@ -150,7 +155,9 @@ impl Node {
                                 break;
                             }
                         }
-                        None => continue,
+                        None => {
+                            continue;
+                        }
                     }
                 }
             });
@@ -164,11 +171,12 @@ impl Node {
 
         {
             let mut operation_store = operation_store.clone();
+            let mut author_store = author_store;
             let udp_server = udp_server.clone();
             let log_id = config.topic.id();
 
             task::spawn(async move {
-                let mut buf = [0; UDP_BUFFER_SIZE];
+                let mut buf = [0; MAX_MESSAGE_SIZE];
 
                 loop {
                     tokio::select! {
@@ -186,28 +194,46 @@ impl Node {
                                     )
                                     .await;
 
-                                    let Ok(bytes) = encode_gossip_message(&header, body.as_ref()) else {
+                                    let Ok(gossip_message_bytes) = encode_gossip_message(&header, body.as_ref()) else {
                                         error!("could not encode gossip message");
                                         break;
                                     };
+                                    let header_bytes = header.to_bytes();
 
-                                    debug!(seq_num = header.seq_num, len = len, "publish operation");
-
-                                    if ingest_operation(
+                                    let Ok(result) = ingest_operation(
                                         &mut operation_store,
                                         header,
                                         body,
-                                        bytes.clone(),
+                                        header_bytes,
                                         &log_id,
                                         prune,
                                     )
-                                    .await.is_err() {
+                                    .await else {
                                         error!("could not ingest p2panda operation");
                                         break;
+                                    };
+
+                                    match result {
+                                        IngestResult::Complete(operation) => {
+                                            author_store
+                                                .add_author(
+                                                    Topic::new(log_id),
+                                                    operation.header.public_key
+                                                )
+                                                .await;
+
+                                            debug!(
+                                                seq_num = operation.header.seq_num,
+                                                len = len,
+                                                hash = %operation.hash,
+                                                "publish operation"
+                                            );
+                                        },
+                                        _ => unreachable!(),
                                     }
 
                                     if network_tx.send(ToNetwork::Message {
-                                        bytes,
+                                        bytes: gossip_message_bytes,
                                     }).await.is_err() {
                                         break;
                                     }

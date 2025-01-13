@@ -86,13 +86,17 @@ impl TopicLogMap<Topic, LogId> for AuthorStore {
     /// given topic.
     async fn get(&self, topic: &Topic) -> Option<HashMap<PublicKey, Vec<LogId>>> {
         let authors = self.authors(topic).await;
-        authors.map(|authors| {
-            let mut map = HashMap::with_capacity(authors.len());
-            for author in authors {
-                // We write all data of one author into one log for now.
-                map.insert(author, vec![topic.id()]);
+        let map = match authors {
+            Some(authors) => {
+                let mut map = HashMap::with_capacity(authors.len());
+                for author in authors {
+                    // We write all data of one author into one log for now.
+                    map.insert(author, vec![topic.id()]);
+                }
+                map
             }
-            map
-        })
+            None => HashMap::new(),
+        };
+        Some(map)
     }
 }
