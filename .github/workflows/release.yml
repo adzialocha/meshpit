@@ -22,17 +22,17 @@ jobs:
     strategy:
       matrix:
         include:
-          - target: arm-unknown-linux-musleabihf
+          - target: armv7-unknown-linux-gnueabihf # Armv7-A Linux, hardfloat (kernel 3.2, glibc 2.17) for RaspberryPi 2/3/4
             os: ubuntu-latest
-          - target: aarch64-unknown-linux-gnu
+          - target: aarch64-unknown-linux-gnu # ARM64 Linux (kernel 4.1, glibc 2.17+)
             os: ubuntu-latest
-          - target: aarch64-apple-darwin
+          - target: x86_64-unknown-linux-gnu # 64-bit Linux (kernel 3.2+, glibc 2.17+)
+            os: ubuntu-latest
+          - target: aarch64-apple-darwin # ARM64 macOS (11.0+, Big Sur+)
             os: macos-latest
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-          - target: x86_64-apple-darwin
+          - target: x86_64-apple-darwin # 64-bit macOS (10.12+, Sierra+)
             os: macos-latest
-          - target: universal-apple-darwin
+          - target: universal-apple-darwin # macOS on ARM64 (M1-family or later Apple Silicon CPUs).
             os: macos-latest
     runs-on: ${{ matrix.os }}
     steps:
