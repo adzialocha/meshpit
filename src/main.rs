@@ -13,15 +13,29 @@ use tracing::info;
     version
 )]
 struct Args {
+    /// Define a short text-string which will be automatically hashed and used as a "topic".
+    ///
+    /// If peers are configured to the same topic, they will find each other automatically, connect
+    /// and sync data with each other.
     #[arg(short = 't', long, value_name = "STRING")]
     topic: Option<String>,
 
+    /// Mention the public key of another peer to use it as a "bootstrap node" for discovery over
+    /// the internet.
+    ///
+    /// If no value is given here, meshpit can only find other peers in your local area network.
     #[arg(short = 'b', long, value_name = "PUBLIC_KEY")]
     bootstrap: Option<PublicKey>,
 
+    /// UDP server address and port. Send your data to this address, it will automatically be
+    /// forwarded to all peers in the network who are subscribed to the same topic.
+    ///
+    /// Meshpit will use localhost and a random port by default.
     #[arg(short = 's', long, value_name = "ADDR:PORT")]
     udp_server: Option<SocketAddr>,
 
+    /// UDP client address and port (default is 49494). Meshpit will automatically forward all
+    /// received data from other peers to this address.
     #[arg(short = 'c', long, value_name = "ADDR:PORT")]
     udp_client: Option<SocketAddr>,
 
