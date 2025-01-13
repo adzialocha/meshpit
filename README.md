@@ -1,6 +1,6 @@
 # meshpit
 
-meshpit is an experimental, small command line tool to send and receive UDP packets among peers in a p2p network with the help of [p2panda](https://p2panda.org).
+meshpit is an experimental, small command line tool turning any program which can send and receive UDP packets to a full p2p application with the help of [p2panda](https://p2panda.org).
 
 meshpit automatically discovers peers who are interested in the same "topic" - in your local network and the internet - connects to them directly, syncs previously sent data and establishes a gossip overlay to broadcast new data.
 
