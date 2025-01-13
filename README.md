@@ -1,14 +1,16 @@
 # meshpit
 
-meshpit is an experimental, small command line tool turning any program which can send and receive UDP packets to a full p2p application with the help of [p2panda](https://p2panda.org).
+> meshpit was developed as an introduction into p2p and local-first networking and artistic tool for the "Radical Networks" course, January 25 at NYU Berlin by [Sarah Grant](https://github.com/chootka).
 
-meshpit automatically discovers peers who are interested in the same "topic" - in your local network and the internet - connects to them directly, syncs previously sent data and establishes a gossip overlay to broadcast new data.
+meshpit is an experimental, small command line tool turning any program which can send and receive UDP packets to a p2p application with the help of [p2panda](https://p2panda.org).
 
-meshpit can be combined with any other software which sends and receives UDP packets and enables it to be part of a p2p network with local-first and eventual consistency guarantees.
+meshpit automatically discovers peers who are interested in the same "topic" - in your local network and the internet - connects to them directly, syncs previously sent data and establishes a gossip overlay to broadcast new messages.
+
+meshpit can be combined with any other software and enables it to be part of a p2p network with local-first and eventual consistency guarantees.
 
 ## Installation
 
-Check out the [Releases](https://github.com/adzialocha/meshpit/releases/) section where we publish binaries for Linux, RaspberryPi, MacOS and Windows or read [how you can compile](#development) `meshpit` yourself.
+Check out the [Releases](https://github.com/adzialocha/meshpit/releases/) section with published binaries for Linux, RaspberryPi, MacOS and Windows or read [how you can compile](#development) meshpit yourself.
 
 ## Usage
 
