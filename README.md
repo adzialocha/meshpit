@@ -6,6 +6,10 @@ meshpit automatically discovers peers who are interested in the same "topic" - i
 
 meshpit can be combined with any other software which sends and receives UDP packets and enables it to be part of a p2p network with local-first and eventual consistency guarantees.
 
+## Installation
+
+Check out the [Releases](https://github.com/adzialocha/meshpit/releases/) section where we publish binaries for Linux, RaspberryPi, MacOS and Windows or read [how you can compile](#development) `meshpit` yourself.
+
 ## Usage
 
 ```
@@ -67,6 +71,16 @@ nc -u <server address> <server port>
 
 # Read messages to UDP client
 nc -lzu -p <client port>
+```
+
+## Development
+
+```bash
+# Run with DEBUG logging enabled
+cargo run -- --log-level DEBUG
+
+# Compile release binary
+cargo build --release
 ```
 
 ## License
