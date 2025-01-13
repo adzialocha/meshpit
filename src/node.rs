@@ -187,7 +187,8 @@ impl Node {
                         message = udp_server.recv(&mut buf) => {
                             match message {
                                 Ok(len) => {
-                                    let prune = false;
+                                    // Set max. depth of append-only log to 1 if we're not syncing.
+                                    let prune = config.no_sync;
 
                                     let (header, body) = create_operation(
                                         &mut operation_store,
