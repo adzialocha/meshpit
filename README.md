@@ -13,29 +13,41 @@ Usage: meshpit [OPTIONS]
 
 Options:
   -t, --topic <STRING>
-          Define a short text-string which will be automatically hashed and used as a "topic".
+          Define a short text-string which will be automatically hashed and
+          used as a "topic".
 
-          If peers are configured to the same topic, they will find each other automatically, connect and sync data with each other.
+          If peers are configured to the same topic, they will find each other
+          automatically, connect and sync data with each other.
 
   -b, --bootstrap <PUBLIC_KEY>
-          Mention the public key of another peer to use it as a "bootstrap node" for discovery over the internet.
+          Mention the public key of another peer to use it as a "bootstrap
+          node" for discovery over the internet.
 
-          If no value is given here, meshpit can only find other peers in your local area network.
+          If no value is given here, meshpit can only find other peers in your
+          local area network.
 
   -s, --udp-server <ADDR:PORT>
-          UDP server address and port. Send your data to this address, it will automatically be forwarded to all peers in the network who are subscribed to the same topic.
+          UDP server address and port. Send your data to this address, it will
+          automatically be forwarded to all peers in the network who are
+          subscribed to the same topic.
 
           Meshpit will use localhost and a random port by default.
 
   -c, --udp-client <ADDR:PORT>
-          UDP client address and port (default is 49494). Meshpit will automatically forward all received data from other peers to this address
+          UDP client address and port (default is 49494). Meshpit will
+          automatically forward all received data from other peers to this
+          address
 
   -l, --log-level <LEVEL>
-          Set log verbosity. Use this for learning more about how your node behaves or for debugging.
+          Set log verbosity. Use this for learning more about how your node
+          behaves or for debugging.
 
-          Possible log levels are: ERROR, WARN, INFO, DEBUG, TRACE. They are scoped to "meshpit" by default.
+          Possible log levels are: ERROR, WARN, INFO, DEBUG, TRACE. They are
+          scoped to "meshpit" by default.
 
-          If you want to adjust the scope for deeper inspection use a filter value, for example "=TRACE" for logging _everything_ or "meshpit=INFO,p2panda_net=DEBUG" etc.
+          If you want to adjust the scope for deeper inspection use a filter
+          value, for example "=TRACE" for logging _everything_ or
+          "meshpit=INFO,p2panda_net=DEBUG" etc.
 
   -h, --help
           Print help (see a summary with '-h')
