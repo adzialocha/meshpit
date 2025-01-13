@@ -21,7 +21,7 @@ Options:
           used as a "topic".
 
           If peers are configured to the same topic, they will find each other
-          automatically, connect and sync data with each other.
+          automatically, connect and sync data.
 
   -b, --bootstrap <PUBLIC_KEY>
           Mention the public key of another peer to use it as a "bootstrap
@@ -35,12 +35,20 @@ Options:
           automatically be forwarded to all peers in the network who are
           subscribed to the same topic.
 
-          Meshpit will use localhost and a random port by default.
+          meshpit will use localhost and a random port by default. Set it to
+          0.0.0.0 (bind to all network interfaces) if you want the UDP server
+          to be accessible for other devices on the network.
 
   -c, --udp-client <ADDR:PORT>
-          UDP client address and port (default is 49494). Meshpit will
+          UDP client address and port (default is 49494). meshpit will
           automatically forward all received data from other peers to this
           address
+
+  -n, --no-sync
+          Disable sync for this node.
+
+          Nodes without sync will not "catch up" on past data and only receive
+          new messages via the broadcast gossip overlay.
 
   -l, --log-level <LEVEL>
           Set log verbosity. Use this for learning more about how your node
@@ -63,14 +71,24 @@ Options:
 ## Example
 
 ```bash
-# Start meshpit node
+# Start meshpit node with DEBUG logging
 meshpit -l DEBUG
 
-# Write messages to UDP server
+# Start meshpit node with alternative topic and bootstrap node
+meshpit -t hello -b 2a97ed5278e22002d0a0611bb9f77eb5f6ebc50b5fb6975e62f06bcf602d6037
+
+# UDP server binding to all network interfaces and custom port. It is reachable
+# now for other devices on the network
+meshpit -s 0.0.0.0:41414
+
+# Write messages to UDP server with "netcat"
 nc -u <server address> <server port>
 
-# Read messages to UDP client
+# Listen for messages to UDP client (tested on Linux)
 nc -lzu -p <client port>
+
+# Listen for messages to UDP client (tested on MacOS)
+nc -kul <client port>
 ```
 
 ## Development

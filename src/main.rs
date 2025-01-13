@@ -16,7 +16,7 @@ struct Args {
     /// Define a short text-string which will be automatically hashed and used as a "topic".
     ///
     /// If peers are configured to the same topic, they will find each other automatically, connect
-    /// and sync data with each other.
+    /// and sync data.
     #[arg(short = 't', long, value_name = "STRING")]
     topic: Option<String>,
 
@@ -30,14 +30,23 @@ struct Args {
     /// UDP server address and port. Send your data to this address, it will automatically be
     /// forwarded to all peers in the network who are subscribed to the same topic.
     ///
-    /// Meshpit will use localhost and a random port by default.
+    /// meshpit will use localhost and a random port by default. Set it to 0.0.0.0 (bind to all
+    /// network interfaces) if you want the UDP server to be accessible for other devices on the
+    /// network.
     #[arg(short = 's', long, value_name = "ADDR:PORT")]
     udp_server: Option<SocketAddr>,
 
-    /// UDP client address and port (default is 49494). Meshpit will automatically forward all
+    /// UDP client address and port (default is 49494). meshpit will automatically forward all
     /// received data from other peers to this address.
     #[arg(short = 'c', long, value_name = "ADDR:PORT")]
     udp_client: Option<SocketAddr>,
+
+    /// Disable sync for this node.
+    ///
+    /// Nodes without sync will not "catch up" on past data and only receive new messages via the
+    /// broadcast gossip overlay.
+    #[arg(short = 'n', long)]
+    no_sync: bool,
 
     /// Set log verbosity. Use this for learning more about how your node behaves or for debugging.
     ///
@@ -56,9 +65,8 @@ impl TryFrom<Args> for Config {
     fn try_from(args: Args) -> std::result::Result<Self, Self::Error> {
         let mut config = Config::default();
 
-        if let Some(bootstrap) = &args.bootstrap {
-            config.bootstrap = Some(bootstrap.to_owned());
-        }
+        config.bootstrap = args.bootstrap;
+        config.no_sync = args.no_sync;
 
         if let Some(topic) = &args.topic {
             config.topic = Topic::from_str(topic)?;

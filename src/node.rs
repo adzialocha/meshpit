@@ -36,6 +36,7 @@ pub struct Config {
     pub udp_server_addr: SocketAddr,
     pub udp_client_addr: SocketAddr,
     pub bootstrap: Option<PublicKey>,
+    pub no_sync: bool,
 }
 
 impl Default for Config {
@@ -45,6 +46,7 @@ impl Default for Config {
             udp_server_addr: (Ipv4Addr::LOCALHOST, 0).into(),
             udp_client_addr: (Ipv4Addr::LOCALHOST, 49494).into(),
             bootstrap: None,
+            no_sync: false,
         }
     }
 }
@@ -68,19 +70,21 @@ impl Node {
         let operation_store = MemoryStore::<LogId, Extensions>::new();
         let author_store = AuthorStore::new();
 
-        let sync_protocol = LogSyncProtocol::new(author_store.clone(), operation_store.clone());
-        let sync_config = SyncConfiguration::new(sync_protocol);
-
         let relay_url = RELAY_ENDPOINT.parse()?;
 
         let mut network_builder = NetworkBuilder::new(network_id.into())
             .discovery(mdns)
-            .sync(sync_config)
             .gossip(GossipConfig {
                 max_message_size: MAX_MESSAGE_SIZE,
                 ..Default::default()
             })
             .relay(relay_url, false, 0);
+
+        if !config.no_sync {
+            let sync_protocol = LogSyncProtocol::new(author_store.clone(), operation_store.clone());
+            let sync_config = SyncConfiguration::new(sync_protocol);
+            network_builder = network_builder.sync(sync_config)
+        }
 
         if let Some(bootstrap) = config.bootstrap {
             network_builder = network_builder.direct_address(bootstrap, vec![], None);
