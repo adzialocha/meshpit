@@ -95,6 +95,8 @@ nc -kul <client port>
 
 ## Development
 
+Make sure you have the [Rust development environment](https://www.rust-lang.org/learn/get-started) installed on your machine.
+
 ```bash
 # Run with DEBUG logging enabled
 cargo run -- --log-level DEBUG
