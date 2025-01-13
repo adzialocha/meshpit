@@ -1,6 +1,6 @@
 # meshpit
 
-> meshpit was developed as an introduction into p2p and local-first networking and artistic tool for the "Radical Networks" course, January 25 at NYU Berlin by [Sarah Grant](https://github.com/chootka).
+> meshpit was developed as an introduction into p2p and local-first networking and artistic tool for the "Radical Networks" course, January 25 at NYU Berlin organized by [Sarah Grant](https://github.com/chootka).
 
 meshpit is an experimental, small command line tool turning any program which can send and receive UDP packets to a p2p application with the help of [p2panda](https://p2panda.org).
 
