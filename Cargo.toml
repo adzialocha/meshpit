@@ -1,7 +1,14 @@
 [package]
 name = "meshpit"
 version = "0.1.0"
+authors = [
+  "adz <x12@adz.garden>",
+]
+description = "Turns any program sending and receiving UDP to a full p2p application"
+repository = "https://github.com/adzialocha/meshpit"
 edition = "2021"
+license = "MIT"
+publish = false
 
 [profile.release]
 strip = true
@@ -20,8 +27,8 @@ p2panda-net = { git = "https://github.com/p2panda/p2panda", rev = "b296805a4f3da
 p2panda-store = { git = "https://github.com/p2panda/p2panda", rev = "b296805a4f3daab3d4e17c28ae8e3d927ed8b007" }
 p2panda-stream = { git = "https://github.com/p2panda/p2panda", rev = "b296805a4f3daab3d4e17c28ae8e3d927ed8b007" }
 p2panda-sync = { git = "https://github.com/p2panda/p2panda", rev = "b296805a4f3daab3d4e17c28ae8e3d927ed8b007", features = ["log-sync"] }
-serde = "1.0.217"
-tokio = "1.43.0"
+serde = { version = "1.0.217", features = ["derive"] }
+tokio = { version = "1.43.0", features = ["fs"] }
 tokio-stream = "0.1.17"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
