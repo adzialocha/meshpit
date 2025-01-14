@@ -22,7 +22,7 @@ use crate::operation::{
 };
 use crate::topic::{AuthorStore, LogId, Topic};
 
-const RELAY_ENDPOINT: &str = "https://staging-euw1-1.relay.iroh.network";
+const RELAY_ENDPOINT: &str = "https://wasser.liebechaos.org";
 
 const NETWORK_ID: &str = "meshpit";
 
