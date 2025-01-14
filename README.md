@@ -27,7 +27,7 @@ Options:
 
   -b, --bootstrap <PUBLIC_KEY>
           Mention the public key of another peer to use it as a "bootstrap
-          node" for discovery over the internet.
+          peer" for discovery over the internet.
 
           If no value is given here, meshpit can only find other peers in your
           local area network.
@@ -73,17 +73,47 @@ Options:
 ## Example
 
 ```bash
-# Start meshpit node with DEBUG logging
-meshpit -l DEBUG
+# Start meshpit node with DEBUG logging, then you can see a little bit more
+# what is going on under the hood.
+meshpit --log-level DEBUG
 
-# Start meshpit node with alternative topic and bootstrap node
-meshpit -t hello -b 2a97ed5278e22002d0a0611bb9f77eb5f6ebc50b5fb6975e62f06bcf602d6037
+# Set an alternative topic, pick any string and as long as other peers use
+# the same, they'll find each other and exchange data.
+#
+# By default meshpit uses the topic "peers-for-peers", so you might end up
+# talking to strangers. Make sure to set it to a custom value if you don't want
+# that!
+meshpit --topic "me-and-my-friends"
 
-# UDP server binding to all network interfaces and custom port. It is reachable
-# now for other devices on the network
-meshpit -s 0.0.0.0:41414
+# Your node will automatically try to find others on your local network (using
+# mDNS) but if you want to connect over the internet and find other peers there
+# you need to mention the public key of one other "bootstrap" peer.
+#
+# The public key is printed in your terminal when you start "meshpit", copy it
+# and paste it as an argument, for example:
+meshpit --bootstrap 2a97ed5278e22002d0a0611bb9f77eb5f6ebc50b5fb6975e62f06bcf602d6037
 
-# Write messages to UDP server with "netcat"
+# The UDP server (receiving your data) is only reachable from the same computer
+# you're running meshpit on. If you want it to be reachable outside of that, you
+# should bind the UDP server to all networking interfaces like that with a custom
+# port:
+meshpit --udp-server 0.0.0.0:41414
+
+# Meshpit will automatically sync with peers, so you will also be able to
+# receive data which was created in the past, for example old "posts"! This
+# allows you to build something which is "eventual consistent", every peer will
+# arrive at the same state after a while.
+#
+# If you don't care about that and you only want to receive new messages from
+# the moment on your peer is online, you can disable sync like that:
+meshpit --no-sync
+```
+
+You can use "netcat" or `nc` in your terminal to experiment with sending and receiving data via UDP to meshpit:
+
+```bash
+# Write messages to meshpit's UDP server with "netcat", just fill in the right
+# IP address and server port which is printed out when you start meshpit:
 nc -u <server address> <server port>
 
 # Listen for messages to UDP client (tested on Linux)
@@ -91,6 +121,10 @@ nc -lzu -p <client port>
 
 # Listen for messages to UDP client (tested on MacOS)
 nc -kul <client port>
+
+# You can change the address and port of the UDP client! meshpit will then
+# forward all received messages to the address you've configured, for example:
+meshpit --udp-client 127.0.0.1:45521
 ```
 
 ## Development
