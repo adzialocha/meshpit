@@ -10,7 +10,7 @@ meshpit can be combined with any other software and enables it to be part of a p
 
 ## Installation
 
-Check out the [Releases](https://github.com/adzialocha/meshpit/releases/) section with published binaries for Linux, RaspberryPi, MacOS and Windows or read [how you can compile](#development) meshpit yourself.
+Check out the [Releases](https://github.com/adzialocha/meshpit/releases/) section with published binaries for Linux, RaspberryPi (ARM) and MacOS or read [how you can compile](#development) meshpit yourself.
 
 ## Usage
 
