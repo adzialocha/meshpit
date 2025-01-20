@@ -65,7 +65,7 @@ impl Node {
         // Launch an p2p network.
         let network_id = Hash::new(NETWORK_ID.as_bytes());
 
-        let mdns = LocalDiscovery::new().context("bind socket for mDNS discovery")?;
+        let mdns = LocalDiscovery::new();
 
         let operation_store = MemoryStore::<LogId, Extensions>::new();
         let author_store = AuthorStore::new();
