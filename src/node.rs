@@ -3,9 +3,9 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
-use iroh_gossip::proto::Config as GossipConfig;
 use p2panda_core::{Extension, Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
+use p2panda_net::config::GossipConfig;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
 use p2panda_stream::operation::{ingest_operation, IngestResult};
