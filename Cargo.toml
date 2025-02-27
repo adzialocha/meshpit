@@ -6,7 +6,7 @@ authors = [
 ]
 description = "Turns any program sending and receiving UDP to a full p2p application"
 repository = "https://github.com/adzialocha/meshpit"
-edition = "2021"
+edition = "2024"
 license = "MIT"
 publish = false
 
@@ -26,6 +26,7 @@ p2panda-net = "0.3.1"
 p2panda-store = "0.3.1"
 p2panda-stream = "0.3.1"
 p2panda-sync = { version = "0.3.1", features = ["log-sync"] }
+pin-utils = "0.1.0"
 serde = { version = "1.0.217", features = ["derive"] }
 tokio = { version = "1.43.0", features = ["fs"] }
 tokio-stream = "0.1.17"

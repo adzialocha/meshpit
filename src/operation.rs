@@ -1,6 +1,6 @@
 use std::time::SystemTime;
 
-use p2panda_core::cbor::{decode_cbor, encode_cbor, DecodeError, EncodeError};
+use p2panda_core::cbor::{DecodeError, EncodeError, decode_cbor, encode_cbor};
 use p2panda_core::{Body, Extension, Header, PrivateKey, PruneFlag};
 use p2panda_store::{LocalLogStore, MemoryStore};
 use serde::{Deserialize, Serialize};

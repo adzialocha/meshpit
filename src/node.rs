@@ -2,23 +2,23 @@ use std::net::{Ipv4Addr, SocketAddr};
 use std::str::FromStr;
 use std::sync::Arc;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
 use p2panda_net::config::GossipConfig;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, SyncConfiguration, ToNetwork, TopicId};
 use p2panda_store::MemoryStore;
-use p2panda_stream::operation::{ingest_operation, IngestResult};
+use p2panda_stream::operation::{IngestResult, ingest_operation};
 use p2panda_stream::{DecodeExt, IngestExt};
 use p2panda_sync::log_sync::LogSyncProtocol;
 use tokio::net::UdpSocket;
 use tokio::sync::mpsc;
 use tokio::task;
-use tokio_stream::{wrappers::ReceiverStream, StreamExt};
+use tokio_stream::{StreamExt, wrappers::ReceiverStream};
 use tracing::{debug, error, warn};
 
 use crate::operation::{
-    create_operation, decode_gossip_message, encode_gossip_message, Extensions,
+    Extensions, create_operation, decode_gossip_message, encode_gossip_message,
 };
 use crate::topic::{AuthorStore, LogId, Topic};
 
@@ -35,7 +35,8 @@ pub struct Config {
     pub topic: Topic,
     pub udp_server_addr: SocketAddr,
     pub udp_client_addr: SocketAddr,
-    pub bootstrap: Option<PublicKey>,
+    pub bootstrap: bool,
+    pub use_bootstrap: Option<PublicKey>,
     pub no_sync: bool,
 }
 
@@ -45,7 +46,8 @@ impl Default for Config {
             topic: Topic::from_str(DEFAULT_TOPIC).unwrap(),
             udp_server_addr: (Ipv4Addr::LOCALHOST, 0).into(),
             udp_client_addr: (Ipv4Addr::LOCALHOST, 49494).into(),
-            bootstrap: None,
+            bootstrap: false,
+            use_bootstrap: None,
             no_sync: false,
         }
     }
@@ -87,7 +89,11 @@ impl Node {
             network_builder = network_builder.sync(sync_config)
         }
 
-        if let Some(bootstrap) = config.bootstrap {
+        if config.bootstrap {
+            network_builder = network_builder.bootstrap();
+        }
+
+        if let Some(bootstrap) = config.use_bootstrap {
             network_builder = network_builder.direct_address(bootstrap, vec![], None);
         }
 

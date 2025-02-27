@@ -2,7 +2,7 @@ use std::{net::SocketAddr, str::FromStr};
 
 use anyhow::Result;
 use clap::Parser;
-use meshpit::{setup_tracing, Config, Node, Topic};
+use meshpit::{Config, Node, Topic, setup_tracing};
 use p2panda_core::{PrivateKey, PublicKey};
 use tracing::info;
 
@@ -20,12 +20,18 @@ struct Args {
     #[arg(short = 't', long, value_name = "STRING")]
     topic: Option<String>,
 
+    /// Make this node a "bootstrap node" by enabling the mode.
+    ///
+    /// Bootstrap nodes can help other nodes to find and connect to each other over the internet.
+    #[arg(short = 'b', long, action)]
+    bootstrap: bool,
+
     /// Mention the public key of another peer to use it as a "bootstrap node" for discovery over
     /// the internet.
     ///
     /// If no value is given here, meshpit can only find other peers in your local area network.
-    #[arg(short = 'b', long, value_name = "PUBLIC_KEY")]
-    bootstrap: Option<PublicKey>,
+    #[arg(short = 'u', long, value_name = "PUBLIC_KEY")]
+    use_bootstrap: Option<PublicKey>,
 
     /// UDP server address and port. Send your data to this address, it will automatically be
     /// forwarded to all peers in the network who are subscribed to the same topic.
@@ -66,6 +72,7 @@ impl TryFrom<Args> for Config {
         let mut config = Config::default();
 
         config.bootstrap = args.bootstrap;
+        config.use_bootstrap = args.use_bootstrap;
         config.no_sync = args.no_sync;
 
         if let Some(topic) = &args.topic {
