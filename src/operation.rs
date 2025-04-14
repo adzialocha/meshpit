@@ -33,7 +33,7 @@ impl Extension<PruneFlag> for Extensions {
         header
             .extensions
             .as_ref()
-            .and_then(|extensions| Some(extensions.prune_flag.clone()))
+            .map(|extensions| extensions.prune_flag.clone())
     }
 }
 

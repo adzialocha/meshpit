@@ -79,7 +79,6 @@ impl Node {
             .discovery(mdns)
             .gossip(GossipConfig {
                 max_message_size: MAX_MESSAGE_SIZE,
-                ..Default::default()
             })
             .relay(relay_url, false, 0);
 

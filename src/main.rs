@@ -65,6 +65,7 @@ struct Args {
     log_level: Option<String>,
 }
 
+#[allow(clippy::field_reassign_with_default)]
 impl TryFrom<Args> for Config {
     type Error = anyhow::Error;
 
