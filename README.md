@@ -25,9 +25,15 @@ Options:
           If peers are configured to the same topic, they will find each other
           automatically, connect and sync data.
 
-  -b, --bootstrap <PUBLIC_KEY>
+  -b, --bootstrap
+          Make this node a "bootstrap node" by enabling the mode.
+
+          Bootstrap nodes can help other nodes to find and connect to each
+          other over the internet.
+
+  -u, --use-bootstrap <PUBLIC_KEY>
           Mention the public key of another peer to use it as a "bootstrap
-          peer" for discovery over the internet.
+          node" for discovery over the internet.
 
           If no value is given here, meshpit can only find other peers in your
           local area network.
@@ -85,13 +91,18 @@ meshpit --log-level DEBUG
 # that!
 meshpit --topic "me-and-my-friends"
 
-# Your node will automatically try to find others on your local network (using
-# mDNS) but if you want to connect over the internet and find other peers there
-# you need to mention the public key of one other "bootstrap" peer.
+# Become a bootstrap node so others can connect to each other via the internet!
 #
 # The public key is printed in your terminal when you start "meshpit", copy it
 # and paste it as an argument, for example:
-meshpit --bootstrap 2a97ed5278e22002d0a0611bb9f77eb5f6ebc50b5fb6975e62f06bcf602d6037
+meshpit --bootstrap
+
+# Mention someone's bootstrap node so you can find each other via the internet.
+#
+# Your node will automatically try to find others on your local network (using
+# mDNS) but if you want to connect over the internet and find other peers there
+# you need to mention the public key of one other "bootstrap" peer.
+meshpit --use-bootstrap 2a97ed5278e22002d0a0611bb9f77eb5f6ebc50b5fb6975e62f06bcf602d6037
 
 # The UDP server (receiving your data) is only reachable from the same computer
 # you're running meshpit on. If you want it to be reachable outside of that, you

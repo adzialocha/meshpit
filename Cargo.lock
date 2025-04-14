@@ -2042,7 +2042,6 @@ dependencies = [
  "p2panda-store",
  "p2panda-stream",
  "p2panda-sync",
- "pin-utils",
  "serde",
  "tokio",
  "tokio-stream",
