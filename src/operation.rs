@@ -20,14 +20,20 @@ pub struct Extensions {
 }
 
 impl Extension<LogId> for Extensions {
-    fn extract(&self) -> Option<LogId> {
-        Some(self.log_id)
+    fn extract(header: &Header<Self>) -> Option<LogId> {
+        header
+            .extensions
+            .as_ref()
+            .map(|extensions| extensions.log_id)
     }
 }
 
 impl Extension<PruneFlag> for Extensions {
-    fn extract(&self) -> Option<PruneFlag> {
-        Some(self.prune_flag.clone())
+    fn extract(header: &Header<Self>) -> Option<PruneFlag> {
+        header
+            .extensions
+            .as_ref()
+            .and_then(|extensions| Some(extensions.prune_flag.clone()))
     }
 }
 

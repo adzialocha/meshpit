@@ -3,7 +3,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use anyhow::{anyhow, Context, Result};
-use p2panda_core::{Extension, Hash, PrivateKey, PublicKey};
+use p2panda_core::{Hash, PrivateKey, PublicKey};
 use p2panda_discovery::mdns::LocalDiscovery;
 use p2panda_net::config::GossipConfig;
 use p2panda_net::{FromNetwork, Network, NetworkBuilder, SyncConfiguration, ToNetwork, TopicId};
@@ -73,6 +73,7 @@ impl Node {
         let relay_url = RELAY_ENDPOINT.parse()?;
 
         let mut network_builder = NetworkBuilder::new(network_id.into())
+            .private_key(private_key.clone())
             .discovery(mdns)
             .gossip(GossipConfig {
                 max_message_size: MAX_MESSAGE_SIZE,
@@ -139,7 +140,7 @@ impl Node {
 
             task::spawn(async move {
                 while let Some(operation) = stream.next().await {
-                    let log_id: Option<LogId> = operation.header.extract();
+                    let log_id: Option<LogId> = operation.header.extension();
                     let topic = Topic::new(log_id.expect("log id exists in header extensions"));
                     author_store
                         .add_author(topic, operation.header.public_key)
